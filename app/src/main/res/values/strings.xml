@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">UDPCarControl2</string>
+    <string name="pass1">Control Password</string>
+</resources>

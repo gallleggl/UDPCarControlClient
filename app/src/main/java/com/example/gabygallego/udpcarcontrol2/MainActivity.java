@@ -54,7 +54,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        ImageView display = findViewById(R.id.imageView);
+        final ImageView display = findViewById(R.id.imageView);
+        final EditText imagePassField = findViewById(R.id.imagePassword);
         try {
             establishSocket();
             defaultImage = Utils.loadResource(this,R.drawable.car,CV_LOAD_IMAGE_COLOR);
@@ -66,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        new ImageReader(mSocket_image, (ImageView) findViewById(R.id.imageView),defaultImage).execute();
+                        new ImageReader(mSocket_image, display,defaultImage,imagePassField).execute();
                     }
                 });
                 h.postDelayed(runnable, 330);
@@ -99,7 +100,11 @@ public class MainActivity extends AppCompatActivity {
                 NumberFormat nf = NumberFormat.getInstance();
                 nf.setMaximumFractionDigits(2);
                 nf.setGroupingUsed(false);
-                message = "PASSWORD=123456789;STEERING=" + turnData + ";";
+                EditText controlPassField = findViewById(R.id.controlPassword);
+                String controlPassText = controlPassField.getText().toString();
+                EditText typeField = findViewById(R.id.type);
+                String typeText = typeField.getText().toString();
+                message = "PASSWORD=" + controlPassText + ";TYPE=" + typeText + ";STEERING=" + turnData + ";";
                 message = message + "ACCELERATION=" + nf.format(accelerationData);
 
                 Log.d("TAG", message);
@@ -154,21 +159,25 @@ class ImageReader extends AsyncTask<Void, Void, Void> {
     private static Mat mRgba;
     private static ImageView imageViewer;
     private static Mat defaultImage;
+    private static EditText imagePassField;
 
-    public ImageReader(DatagramSocket mSocket_image, ImageView imageViewer, Mat defaultImage) {
+    public ImageReader(DatagramSocket mSocket_image, ImageView imageViewer, Mat defaultImage, EditText imagePassField) {
         this.mSocket = mSocket_image;
         this.imageViewer = imageViewer;
         this.defaultImage = defaultImage;
+        this.imagePassField = imagePassField;
     }
 
     protected Void doInBackground(Void... message) {
         try {
-            String password = "PASSWORD=987654321";
+
+            String imagePassText = imagePassField.getText().toString();
+            String password = "PASSWORD=" + imagePassText;
             byte[] buffer = password.getBytes();
             InetAddress mServerAddress = InetAddress.getByName(SERVER_NAME);
             DatagramPacket messagePacket = new DatagramPacket(buffer, buffer.length, mServerAddress, SERVER_PORT_IMAGE);
             mSocket.send(messagePacket);
-            byte[] imageBytes = new byte[30000];
+            byte[] imageBytes = new byte[50000];
             DatagramPacket packet = new DatagramPacket(imageBytes, imageBytes.length);
 
             mSocket.setSoTimeout(1000);

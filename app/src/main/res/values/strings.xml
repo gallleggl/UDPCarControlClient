@@ -2,5 +2,5 @@
     <string name="app_name">UDPCarControl2</string>
     <string name="pass1">Control</string>
     <string name="pass2">Image</string>
-    <string name="imageType">Normal/Lane Detect/Cartoon</string>
+    <string name="imageType">Normal/Detect Lane/Cartoon</string>
 </resources>

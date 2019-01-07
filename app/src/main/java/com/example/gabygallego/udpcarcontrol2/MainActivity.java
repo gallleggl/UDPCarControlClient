@@ -1,12 +1,11 @@
+
 package com.example.gabygallego.udpcarcontrol2;
 
 
 import android.graphics.Bitmap;
-import android.media.Image;
 import android.os.AsyncTask;
 
 import android.os.Handler;
-import android.provider.ContactsContract;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
@@ -43,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
     private static Handler h = new Handler();
     private static Runnable runnable;
     private static Mat defaultImage;
+
     static {
         if (BuildConfig.DEBUG) {
             OpenCVLoader.initDebug();
@@ -58,7 +58,7 @@ public class MainActivity extends AppCompatActivity {
         final EditText imagePassField = findViewById(R.id.imagePassword);
         try {
             establishSocket();
-            defaultImage = Utils.loadResource(this,R.drawable.car,CV_LOAD_IMAGE_COLOR);
+            defaultImage = Utils.loadResource(this, R.drawable.car, CV_LOAD_IMAGE_COLOR);
         } catch (IOException ex) {
             //bad
         }
@@ -67,7 +67,9 @@ public class MainActivity extends AppCompatActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        new ImageReader(mSocket_image, display,defaultImage,imagePassField).execute();
+                        EditText typeField = findViewById(R.id.type);
+                        String typeText = typeField.getText().toString();
+                        new ImageReader(mSocket_image, display, defaultImage, imagePassField, typeField, mSocket_data).execute();
                     }
                 });
                 h.postDelayed(runnable, 330);
@@ -102,9 +104,7 @@ public class MainActivity extends AppCompatActivity {
                 nf.setGroupingUsed(false);
                 EditText controlPassField = findViewById(R.id.controlPassword);
                 String controlPassText = controlPassField.getText().toString();
-                EditText typeField = findViewById(R.id.type);
-                String typeText = typeField.getText().toString();
-                message = "PASSWORD=" + controlPassText + ";TYPE=" + typeText + ";STEERING=" + turnData + ";";
+                message = "PASSWORD=" + controlPassText + ";STEERING=" + turnData + ";";
                 message = message + "ACCELERATION=" + nf.format(accelerationData);
 
                 Log.d("TAG", message);
@@ -132,7 +132,7 @@ public class MainActivity extends AppCompatActivity {
 
 class DataSender extends AsyncTask<String, Void, String> {
     private static final int SERVER_PORT_DATA = 4597;
-    private static final String SERVER_NAME = "10.66.22.111";
+    private static final String SERVER_NAME = "10.66.70.119";
     private DatagramSocket mSocket_data;
 
     public DataSender(DatagramSocket mSocket_data) {
@@ -146,7 +146,7 @@ class DataSender extends AsyncTask<String, Void, String> {
             DatagramPacket messagePacket = new DatagramPacket(buffer, buffer.length, mServerAddress, SERVER_PORT_DATA);
             mSocket_data.send(messagePacket);
         } catch (IOException ex) {
-            Log.d("TAG","bad");
+            Log.d("TAG", "bad");
         }
         return message[0];
     }
@@ -155,24 +155,33 @@ class DataSender extends AsyncTask<String, Void, String> {
 class ImageReader extends AsyncTask<Void, Void, Void> {
     DatagramSocket mSocket;
     private static final int SERVER_PORT_IMAGE = 4579;
-    private static final String SERVER_NAME = "10.66.22.111";
+    private static final String SERVER_NAME = "10.66.70.119";
     private static Mat mRgba;
     private static ImageView imageViewer;
     private static Mat defaultImage;
     private static EditText imagePassField;
+    private static EditText typeField;
+    private static final int SERVER_PORT_DATA = 4597;
+    private DatagramSocket mSocket_data;
 
-    public ImageReader(DatagramSocket mSocket_image, ImageView imageViewer, Mat defaultImage, EditText imagePassField) {
+
+    public ImageReader(DatagramSocket mSocket_image, ImageView imageViewer, Mat defaultImage, EditText imagePassField, EditText typeField, DatagramSocket mSocket_data) {
         this.mSocket = mSocket_image;
         this.imageViewer = imageViewer;
         this.defaultImage = defaultImage;
         this.imagePassField = imagePassField;
+        this.typeField = typeField;
+        this.mSocket_data = mSocket_data;
+
     }
 
     protected Void doInBackground(Void... message) {
         try {
 
             String imagePassText = imagePassField.getText().toString();
-            String password = "PASSWORD=" + imagePassText;
+
+            String typeText = typeField.getText().toString();
+            String password = "PASSWORD=" + imagePassText +  ";TYPE=" + typeText;
             byte[] buffer = password.getBytes();
             InetAddress mServerAddress = InetAddress.getByName(SERVER_NAME);
             DatagramPacket messagePacket = new DatagramPacket(buffer, buffer.length, mServerAddress, SERVER_PORT_IMAGE);
@@ -193,6 +202,7 @@ class ImageReader extends AsyncTask<Void, Void, Void> {
             //bad
             Log.d("TAG", "Excpetion thrown");
         }
+        Log.i("done", "Hi 1");
         return null;
     }
 
